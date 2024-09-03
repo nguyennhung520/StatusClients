@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Status Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-ok {
+            color: green;
+            font-weight: bold;
+        }
+        .status-error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Client Status Dashboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Client Name</th>
+                <th>Last Modified</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="statusTableBody">
+            <!-- Data will be populated here via JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        // Fetch data from the PowerShell API
+        async function fetchData() {
+            try {
+                const response = await fetch('http://localhost:8080/');
+                const data = await response.json();
+                populateTable(data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        // Populate the table with data
+        function populateTable(data) {
+            const tbody = document.getElementById('statusTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(client => {
+                const now = new Date();
+                const lastModified = new Date(client.LastModified);
+                const timeDifference = Math.floor((now - lastModified) / 60000); // Difference in minutes
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${client.FileName}</td>
+                    <td>${client.LastModified}</td>
+                    <td class="${timeDifference <= 5 ? 'status-ok' : 'status-error'}">
+                        ${timeDifference <= 5 ? 'OK' : 'Error'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+
+                // Logging for debugging
+                console.log('Current Time:', now.toLocaleString());
+                console.log('Last Modified Time:', lastModified.toLocaleString());
+                console.log('Time Difference (minutes):', timeDifference);
+            });
+        }
+
+        // Refresh data every 5 minutes
+        setInterval(fetchData, 300000); // 300000 ms = 5 minutes
+
+        // Initial data fetch
+        fetchData();
+    </script>
+</body>
+</html>
